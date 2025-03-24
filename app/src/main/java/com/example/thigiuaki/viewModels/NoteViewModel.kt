@@ -81,23 +81,25 @@ class NoteViewModel : ViewModel() {
         }
     }
 
-    private fun uploadImageToCloudinary(uri : Uri , context : Context , onResult: (String) -> Unit) {
-        val file = uriToFile(context , uri)
-        if(file == null || !file.exists()) {
-            Log.e("Cloudinary" , "File does not exist, cannot upload")
+    private fun uploadImageToCloudinary(uri: Uri, context: Context, onResult: (String) -> Unit) {
+        val file = uriToFile(context, uri)
+        if (file == null || !file.exists()) {
+            Log.e("Cloudinary", "File does not exist, cannot upload")
             return
         }
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = cloudinary.uploader().upload(file , ObjectUtils.emptyMap())
-                val imageUrl = response["url"] as? String ?: ""
+                val response = cloudinary.uploader().upload(file, ObjectUtils.asMap("secure", true))
+                val imageUrl = response["secure_url"] as? String ?: "" // secure_url là lưu ảnh thành https://
+
+                Log.d("Cloudinary", "Image uploaded: $imageUrl")
 
                 withContext(Dispatchers.Main) {
                     onResult(imageUrl)
                 }
-            } catch( e: Exception) {
-                Log.e("Cloudinary" , "upload failed" , e)
+            } catch (e: Exception) {
+                Log.e("Cloudinary", "Upload failed", e)
                 withContext(Dispatchers.Main) { onResult("") }
             }
         }

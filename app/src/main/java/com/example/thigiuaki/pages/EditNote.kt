@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -27,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
@@ -59,10 +61,36 @@ fun EditNote(note: Note, noteViewModel: NoteViewModel, navController: NavControl
     var imageUrl by remember { mutableStateOf(note.image_url) } // Giữ URL gốc nếu không thay đổi ảnh
     val context = LocalContext.current
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     val imagePicker =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
             imageUri = uri
         }
+
+    // dialog hiển thị chấp nhận hay không
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false }, // Đóng dialog khi nhấn ra ngoài
+            title = { Text("Xác nhận xoá") },
+            text = { Text("Bạn có chắc chắn muốn xoá không?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    noteViewModel.deleteNote(note.nid) {
+                        navController.popBackStack()
+                    }
+                }) {
+                    Text("Xoá", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
+    //------------------------------
 
     Scaffold(
         topBar = {
@@ -82,9 +110,7 @@ fun EditNote(note: Note, noteViewModel: NoteViewModel, navController: NavControl
                 },
                 actions = {
                     IconButton(onClick = {
-                        noteViewModel.deleteNote(note.nid) {
-                            navController.popBackStack()
-                        }
+                        showDeleteDialog = true
                     }) {
                         Icon(
                             imageVector = Icons.Default.Delete, // Biểu tượng Xoa
